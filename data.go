@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	// Import to handle HTTP messages
-
 	"net/http"
 
 	//Import to extract the current time of the received messages
@@ -37,7 +37,7 @@ func GetUserData(c *gin.Context) {
 	var dataPoints []map[string]interface{}
 
 	query := db.Table("Dialog_rows").
-		Select("dialogID", "customerID", "stext", "language", "CAST(created_at AS TIMESTAMP) AS created_at").
+		Select("dialogID", "customerID", "stext", "language").
 		Order("created_at DESC")
 
 	// Check if language argument is present
@@ -50,6 +50,13 @@ func GetUserData(c *gin.Context) {
 		query = query.Where("customerID = ?", customerID)
 	}
 
+	// Get the page number and page size from the query parameters
+	page, _ := strconv.Atoi(c.Query("page"))
+	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
+
+	// Calculate the offset based on the page number and page size
+	offset := (page - 1) * pageSize
+	db = db.Limit(pageSize).Offset(offset)
 	// Execute the query and scan the results into the dataPoints slice
 	if err := query.Find(&dataPoints).Error; err != nil {
 		fmt.Println("Failed to execute query:", err)
