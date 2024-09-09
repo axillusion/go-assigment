@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"strconv"
 
 	// Import to handle HTTP messages
@@ -12,6 +10,11 @@ import (
 
 	// Import for using api endpoints
 	"github.com/gin-gonic/gin"
+
+	//Import for logging
+	"github.com/sirupsen/logrus"
+
+	//Import for database interaction
 	"gorm.io/gorm"
 )
 
@@ -33,7 +36,6 @@ type DialogRow struct {
 func GetUserData(c *gin.Context) {
 	language := c.Query("language")
 	customerID := c.Query("customerID")
-
 	var dataPoints []map[string]interface{}
 
 	query := db.Table("Dialog_rows").
@@ -56,10 +58,13 @@ func GetUserData(c *gin.Context) {
 
 	// Calculate the offset based on the page number and page size
 	offset := (page - 1) * pageSize
+
+	Log.WithFields(logrus.Fields{"language": language, "customerID": customerID, "page": page, "pageSize": pageSize}).Info("Received request to fetch data on data/ with the following parameters")
+
 	db = db.Limit(pageSize).Offset(offset)
 	// Execute the query and scan the results into the dataPoints slice
 	if err := query.Find(&dataPoints).Error; err != nil {
-		fmt.Println("Failed to execute query:", err)
+		Log.Fatal("Failed to execute database query to extract the data")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data"})
 		return
 	}
@@ -78,9 +83,10 @@ func DeleteDialogData(dialogID string) {
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
+	Log.Info("Deleting data from the database")
 	res := db.Where("dialogID = ?", dialogID).Delete(&DialogRow{})
 	if res.Error != nil {
-		panic(res.Error)
+		Log.WithFields(logrus.Fields{"dialogID": dialogID}).Fatal("Failed to delete rows from database with this id")
 	}
 }
 
@@ -88,18 +94,19 @@ func DeleteDialogData(dialogID string) {
 func AddMessageToDialog(c *gin.Context) {
 	customerID := c.Param("customerID")
 	dialogID := c.Param("dialogID")
+	Log.WithFields(logrus.Fields{"customerID": customerID, "dialogID": dialogID}).Info("Post request for a new dialog entry with this params has been called")
 	var messageContent Data
 	err := c.BindJSON(&messageContent)
 	// Message has to contain the text and the language of the message
 	if err != nil {
 		// Returns a bad request if the body is not valid
 		c.JSON(http.StatusBadRequest, "Invalid JSON payload")
-		panic(err.Error())
+		Log.Warn("The JSON payload of the request invalid, processing finished")
 		return
 	}
-	fmt.Println("Received message:", messageContent)
 	// save the new message received in the Database
-	SaveToDB(customerID, dialogID, messageContent.Text, messageContent.Language)
+	Log.Info("Processing request")
+	defer SaveToDB(customerID, dialogID, messageContent.Text, messageContent.Language)
 	c.JSON(http.StatusOK, "Message saved")
 }
 
@@ -115,9 +122,12 @@ func SaveToDB(customerID string, dialogID string, text string, language string) 
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
+	Log.WithFields(logrus.Fields{"DialogID": dialogID, "CustomerID": "customerID", "Text": text, "Language": language}).Info("Creating new database entry with this information")
 	err := db.Create(&DialogRow{DialogID: dialogID, CustomerID: customerID, Text: text, Language: language})
 	db.Commit()
 	if err.Error != nil {
-		log.Fatal(err.RowsAffected)
+		Log.Fatal("Failed to add the data to the database")
+		return
 	}
+	Log.Info("Sucessfuly added the entry")
 }
