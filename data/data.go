@@ -1,4 +1,4 @@
-package main
+package data
 
 import (
 	"strconv"
@@ -13,24 +13,7 @@ import (
 
 	//Import for logging
 	"github.com/sirupsen/logrus"
-
-	//Import for database interaction
-	"gorm.io/gorm"
 )
-
-// Basic struct containing the data stored for each user
-type Data struct {
-	Text     string `json:"text"`
-	Language string `json:"language"`
-}
-
-type DialogRow struct {
-	gorm.Model
-	DialogID   string `json:"dialogId" gorm:"column:dialogID"`
-	CustomerID string `json:"customerId" gorm:"column:customerID"`
-	Text       string `json:"text" gorm:"column:stext"`
-	Language   string `json:"language" gorm:"column:language"`
-}
 
 // Endpoint to fetch all the data
 func GetUserData(c *gin.Context) {
@@ -38,7 +21,7 @@ func GetUserData(c *gin.Context) {
 	customerID := c.Query("customerID")
 	var dataPoints []map[string]interface{}
 
-	query := db.Table("Dialog_rows").
+	query := Db.Table("Dialog_rows").
 		Select("dialogID", "customerID", "stext", "language").
 		Order("created_at DESC")
 
@@ -61,7 +44,7 @@ func GetUserData(c *gin.Context) {
 
 	Log.WithFields(logrus.Fields{"language": language, "customerID": customerID, "page": page, "pageSize": pageSize}).Info("Received request to fetch data on data/ with the following parameters")
 
-	db = db.Limit(pageSize).Offset(offset)
+	Db = Db.Limit(pageSize).Offset(offset)
 	// Execute the query and scan the results into the dataPoints slice
 	if err := query.Find(&dataPoints).Error; err != nil {
 		Log.Fatal("Failed to execute database query to extract the data")
@@ -84,7 +67,7 @@ func DeleteDialogData(dialogID string) {
 	// 	log.Fatal(err)
 	// }
 	Log.Info("Deleting data from the database")
-	res := db.Where("dialogID = ?", dialogID).Delete(&DialogRow{})
+	res := Db.Where("dialogID = ?", dialogID).Delete(&DialogRow{})
 	if res.Error != nil {
 		Log.WithFields(logrus.Fields{"dialogID": dialogID}).Fatal("Failed to delete rows from database with this id")
 	}
@@ -123,10 +106,9 @@ func SaveToDB(customerID string, dialogID string, text string, language string) 
 	// 	log.Fatal(err)
 	// }
 	Log.WithFields(logrus.Fields{"DialogID": dialogID, "CustomerID": "customerID", "Text": text, "Language": language}).Info("Creating new database entry with this information")
-	err := db.Create(&DialogRow{DialogID: dialogID, CustomerID: customerID, Text: text, Language: language})
-	db.Commit()
+	err := Db.Create(&DialogRow{DialogID: dialogID, CustomerID: customerID, Text: text, Language: language})
 	if err.Error != nil {
-		Log.Fatal("Failed to add the data to the database")
+		Log.WithFields(logrus.Fields{"error": err.Error}).Fatal("Failed to add the data to the database because")
 		return
 	}
 	Log.Info("Sucessfuly added the entry")

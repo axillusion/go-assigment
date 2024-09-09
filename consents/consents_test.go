@@ -1,4 +1,4 @@
-package main
+package consents
 
 import (
 	// for testing the functions
