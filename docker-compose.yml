@@ -1,0 +1,12 @@
+version: '3'
+services:
+  db: 
+    image: mysql:latest
+    container_name: dbContainer
+    ports: 
+      - "3306:3306"
+    envinronment: 
+      - MYSQL_ROOT_PASSWORD=sqlTudelft+990!
+      - MYSQL_DATABASE=Messages
+    volumes:
+      - "C:/Users/TAAGECA3/OneDrive - Swisscom/Desktop/Db"
