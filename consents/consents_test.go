@@ -2,44 +2,123 @@ package consents
 
 import (
 	// for testing the functions
-
+	"bytes"
+	"go-assigment/data"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
-func TestCheckConsent(t *testing.T) {
-	// Create a new router
+func TestCheckConsentWithConsentGiven(t *testing.T) {
+	//gin.SetMode(gin.TestMode)
+	data.Log = logrus.New()
+	// Create a new Gin router
 	router := gin.Default()
 
-	// Register the CheckConsent endpoint
-	router.POST("/check-consent/:dialogID", CheckConsent)
+	// Define a test route for the CheckConsent handler
+	router.POST("/consents/:dialogID", CheckConsent)
 
-	// Create a new HTTP request with the desired method, URL, and request body
-	reqBody := "true" // Set the request body as "true" for testing
-	req, err := http.NewRequest("POST", "/check-consent/dialog123", strings.NewReader(reqBody))
+	// Create a test request
+	dialogID := "123"
+	message := "true"
+	requestBody := []byte(message)
+
+	req, err := http.NewRequest("POST", "/consents/"+dialogID, bytes.NewBuffer(requestBody))
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to create test request: %s", err)
 	}
 
-	// Create a response recorder to record the response
-	res := httptest.NewRecorder()
+	// Create a response recorder to capture the response
+	recorder := httptest.NewRecorder()
 
-	// Process the request using the router
-	router.ServeHTTP(res, req)
+	// Use the router to handle the test request
+	router.ServeHTTP(recorder, req)
 
-	// Check the response status code
-	if res.Code != http.StatusOK {
-		t.Errorf("Expected status code %v, but got %v", http.StatusOK, res.Code)
+	// Verify the response
+	if recorder.Code != http.StatusOK {
+		t.Errorf("Expected status code %d, but got %d", http.StatusOK, recorder.Code)
 	}
 
-	// Check the response body
-	expectedBody := "Dialog data saved"
-	actualBody := res.Body.String()
-	if actualBody != expectedBody {
-		t.Errorf("Expected response body %q, but got %q", expectedBody, actualBody)
+	responseBody := recorder.Body.String()
+	expectedResponse := `"Dialog data saved"`
+	if responseBody != expectedResponse {
+		t.Errorf("Expected response body to be '%s', but got '%s'", expectedResponse, responseBody)
+	}
+}
+
+func TestCheckConsentWithoutConsent(t *testing.T) {
+	//gin.SetMode(gin.TestMode)
+	data.Log = logrus.New()
+	// Create a new Gin router
+	router := gin.Default()
+
+	// Define a test route for the CheckConsent handler
+	router.POST("/consents/:dialogID", CheckConsent)
+
+	// Create a test request
+	dialogID := "123"
+	message := "false"
+	requestBody := []byte(message)
+
+	req, err := http.NewRequest("POST", "/consents/"+dialogID, bytes.NewBuffer(requestBody))
+	if err != nil {
+		t.Fatalf("Failed to create test request: %s", err)
+	}
+
+	// Create a response recorder to capture the response
+	recorder := httptest.NewRecorder()
+
+	// Use the router to handle the test request
+	router.ServeHTTP(recorder, req)
+
+	// Verify the response
+	if recorder.Code != http.StatusOK {
+		t.Errorf("Expected status code %d, but got %d", http.StatusOK, recorder.Code)
+	}
+
+	responseBody := recorder.Body.String()
+	expectedResponse := `"Dialog data deleted"`
+	if responseBody != expectedResponse {
+		t.Errorf("Expected response body to be '%s', but got '%s'", expectedResponse, responseBody)
+	}
+}
+
+func TestCheckConsentWithInvalidPayload(t *testing.T) {
+	//gin.SetMode(gin.TestMode)
+	data.Log = logrus.New()
+	// Create a new Gin router
+	router := gin.Default()
+
+	// Define a test route for the CheckConsent handler
+	router.POST("/consents/:dialogID", CheckConsent)
+
+	// Create a test request
+	dialogID := "123"
+	message := "random"
+	requestBody := []byte(message)
+
+	req, err := http.NewRequest("POST", "/consents/"+dialogID, bytes.NewBuffer(requestBody))
+	if err != nil {
+		t.Fatalf("Failed to create test request: %s", err)
+	}
+
+	// Create a response recorder to capture the response
+	recorder := httptest.NewRecorder()
+
+	// Use the router to handle the test request
+	router.ServeHTTP(recorder, req)
+
+	// Verify the response
+	if recorder.Code != http.StatusBadRequest {
+		t.Errorf("Expected status code %d, but got %d", http.StatusBadRequest, recorder.Code)
+	}
+
+	responseBody := recorder.Body.String()
+	expectedResponse := `"Invalid request body"`
+	if responseBody != expectedResponse {
+		t.Errorf("Expected response body to be '%s', but got '%s'", expectedResponse, responseBody)
 	}
 }
