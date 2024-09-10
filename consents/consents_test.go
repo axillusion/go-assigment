@@ -9,12 +9,11 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 func TestCheckConsentWithConsentGiven(t *testing.T) {
 	//gin.SetMode(gin.TestMode)
-	data.Log = logrus.New()
+	data.Init()
 	// Create a new Gin router
 	router := gin.Default()
 
@@ -51,7 +50,7 @@ func TestCheckConsentWithConsentGiven(t *testing.T) {
 
 func TestCheckConsentWithoutConsent(t *testing.T) {
 	//gin.SetMode(gin.TestMode)
-	data.Log = logrus.New()
+	data.Init()
 	// Create a new Gin router
 	router := gin.Default()
 
@@ -88,7 +87,7 @@ func TestCheckConsentWithoutConsent(t *testing.T) {
 
 func TestCheckConsentWithInvalidPayload(t *testing.T) {
 	//gin.SetMode(gin.TestMode)
-	data.Log = logrus.New()
+	data.Init()
 	// Create a new Gin router
 	router := gin.Default()
 

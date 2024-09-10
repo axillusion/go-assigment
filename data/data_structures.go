@@ -1,7 +1,10 @@
 package data
 
 import (
+	"os"
+
 	"github.com/sirupsen/logrus"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
@@ -21,3 +24,18 @@ type DialogRow struct {
 
 var Db *gorm.DB
 var Log *logrus.Logger
+
+func Init() {
+	Log = logrus.New()
+	Log.SetOutput(os.Stdout)
+	Log.SetFormatter(&logrus.JSONFormatter{})
+	Log.SetLevel(logrus.WarnLevel)
+	var err error
+	Db, err = gorm.Open(mysql.Open("root:sqlTudelft+990!@tcp(localhost:3306)/Messages"), &gorm.Config{})
+	Db.AutoMigrate(&DialogRow{})
+
+	if err != nil {
+		Log.Fatal("Could not connect to the database")
+	}
+	Log.Info("Succesfully established database connection")
+}
