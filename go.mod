@@ -2,15 +2,10 @@ module main
 
 go 1.23.0
 
-replace go-assigment/data => /data
-
-replace go-assigment/consents => /consents
-
 require (
 	github.com/gin-gonic/gin v1.10.0
+	github.com/joho/godotenv v1.5.1
 	github.com/sirupsen/logrus v1.9.3
-	go-assigment/consents v0.0.0-00010101000000-000000000000
-	go-assigment/data v0.0.0-00010101000000-000000000000
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.12
 )

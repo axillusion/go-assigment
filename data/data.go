@@ -6,8 +6,6 @@ import (
 	// Import to handle HTTP messages
 	"net/http"
 
-	//Import to extract the current time of the received messages
-
 	// Import for using api endpoints
 	"github.com/gin-gonic/gin"
 
@@ -89,7 +87,7 @@ func AddMessageToDialog(c *gin.Context) {
 	}
 	// save the new message received in the Database
 	Log.Info("Processing request")
-	defer SaveToDB(customerID, dialogID, messageContent.Text, messageContent.Language)
+	go SaveToDB(customerID, dialogID, messageContent.Text, messageContent.Language)
 	c.JSON(http.StatusOK, "Message saved")
 }
 
