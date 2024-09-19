@@ -13,7 +13,7 @@ import (
 	// For text processing
 	"io"
 
-	"go-assigment/data"
+	"main/data"
 )
 
 // Endpoint to save dialog data based on users consent
