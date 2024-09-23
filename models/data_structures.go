@@ -1,7 +1,6 @@
-package data
+package models
 
 import (
-	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -18,6 +17,3 @@ type DialogRow struct {
 	Text       string `json:"text" gorm:"column:stext"`
 	Language   string `json:"language" gorm:"column:language"`
 }
-
-var Db *gorm.DB
-var Log *logrus.Logger
