@@ -4,8 +4,10 @@ import (
 	"main/commons"
 	"main/models"
 	"main/routes"
+	"main/services"
 	"os"
 
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
@@ -14,16 +16,25 @@ import (
 
 func InitServer() {
 	initLogger()
-	initDB()
-	routes.InitEndpoints()
+	DB := initDB()
+	service := services.NewDataService(DB)
+	routes.InitEndpoints(service)
 }
 
-func initDB() {
+func InitServerTest() (*gin.Engine, *commons.MockDataService) {
+	os.Chdir("..")
+	initLogger()
+	initDB()
+	service := new(commons.MockDataService)
+	return routes.InitEndpoints(service), service
+}
+
+func initDB() *gorm.DB {
 	var err error
 
 	err = godotenv.Load()
 	if err != nil {
-		commons.Log.Fatal("Could not load env file")
+		commons.Log.Fatal("Could not load env file with error ?", err)
 	}
 
 	db_user := os.Getenv("DB_USER")
@@ -31,12 +42,13 @@ func initDB() {
 	db_name := os.Getenv("DB_NAME")
 	db_port := os.Getenv("DB_PORT")
 	db_string := db_user + ":" + db_pass + "@tcp(" + db_port + ")/" + db_name
-	commons.Db, err = gorm.Open(mysql.Open(db_string), &gorm.Config{})
-	commons.Db.AutoMigrate(&models.DialogRow{})
+	DB, err := gorm.Open(mysql.Open(db_string), &gorm.Config{})
+	DB.AutoMigrate(&models.DialogRow{})
 	if err != nil {
 		commons.Log.Fatal("Could not connect to the database")
 	}
 	commons.Log.Info("Succesfully established database connection")
+	return DB
 }
 
 func initLogger() {

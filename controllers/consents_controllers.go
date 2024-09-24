@@ -12,8 +12,16 @@ import (
 	"main/services"
 )
 
+type ConsentController struct {
+	service services.DataServiceInterface
+}
+
+func NewConsentController(service services.DataServiceInterface) *ConsentController {
+	return &ConsentController{service: service}
+}
+
 // Endpoint to save dialog data based on users consent
-func CheckConsent(c *gin.Context) {
+func (consentController *ConsentController) CheckConsent(c *gin.Context) {
 	// The ID of the dialog
 	dialogID := c.Param("dialogID")
 	commons.Log.WithFields(logrus.Fields{"dialogID": dialogID}).Info("Endpoint on /data called with on this dialogID")
@@ -39,13 +47,13 @@ func CheckConsent(c *gin.Context) {
 	if answer == "false" {
 		c.JSON(http.StatusOK, "Dialog data deleted")
 		// deletes the dialog data if the user does not consent
-		go services.DeleteDialogData(dialogID, errorChannel)
+		go consentController.service.Delete(dialogID, errorChannel)
 		err := <-errorChannel
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, "Could not delete dialog entries with this ID")
 		}
 	} else {
-		go services.ModifyDB(dialogID, errorChannel)
+		go consentController.service.ModifyDB(dialogID, errorChannel)
 		err := <-errorChannel
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, "Could not delete dialog entries with this ID")

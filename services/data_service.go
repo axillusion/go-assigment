@@ -9,11 +9,47 @@ import (
 	"main/models"
 )
 
+type DataService struct {
+	DB *gorm.DB
+}
+
+type DataServiceInterface interface {
+	FetchData(language string, customerID string, page int, pageSize int, destination interface{}, errorChannel chan<- error)
+	Delete(dialogID string, errorChannel chan<- error)
+	SaveToDB(customerID string, dialogID string, text string, language string, errorChannel chan<- error)
+	ModifyDB(dialogID string, errorChannel chan<- error)
+}
+
+// Constructor for the service to instantiate the database
+func NewDataService(db *gorm.DB) *DataService {
+	return &DataService{
+		DB: db,
+	}
+}
+
 // Given a database with a search query on it, retrives the data
 // destination interface has to match the fetched data
-func FetchData(db *gorm.DB, destination interface{}, errorChannel chan<- error) {
+func (dataService *DataService) FetchData(language string, customerID string, page int, pageSize int, destination interface{}, errorChannel chan<- error) {
+	query := dataService.DB.Table("dialog_rows").
+		Select("dialogID", "customerID", "stext", "language").
+		Order("created_at DESC").
+		Where("consent = ?", true)
+
+	if language != "" {
+		query.Where("language = ?", language)
+	}
+
+	if customerID != "" {
+		query.Where("customerID = ?", customerID)
+	}
+
+	if pageSize > 0 {
+		offset := pageSize * (page - 1)
+		query.Limit(pageSize).Offset(offset)
+	}
+
 	commons.Log.Info("Fetching data")
-	err := db.Find(destination).Error
+	err := query.Find(destination).Error
 	errorChannel <- err
 	if err != nil {
 		commons.Log.Warn("Failed to execute database query to extract the data")
@@ -23,9 +59,9 @@ func FetchData(db *gorm.DB, destination interface{}, errorChannel chan<- error) 
 }
 
 // Deletes all the entries with the dialogID mentioned
-func DeleteDialogData(dialogID string, errorChannel chan<- error) {
+func (dataService *DataService) Delete(dialogID string, errorChannel chan<- error) {
 	commons.Log.Info("Deleting data from the database")
-	res := commons.Db.Where("dialogID = ?", dialogID).Delete(&models.DialogRow{})
+	res := dataService.DB.Where("dialogID = ?", dialogID).Delete(&models.DialogRow{})
 	errorChannel <- res.Error
 	if res.Error != nil {
 		commons.Log.WithFields(logrus.Fields{"dialogID": dialogID}).Fatal("Failed to delete rows from database with this id")
@@ -35,9 +71,9 @@ func DeleteDialogData(dialogID string, errorChannel chan<- error) {
 }
 
 // Given a dialog entry, saves it in the database
-func SaveToDB(customerID string, dialogID string, text string, language string, errorChannel chan<- error) {
+func (dataService *DataService) SaveToDB(customerID string, dialogID string, text string, language string, errorChannel chan<- error) {
 	commons.Log.WithFields(logrus.Fields{"DialogID": dialogID, "CustomerID": "customerID", "Text": text, "Language": language}).Info("Creating new database entry with this information")
-	err := commons.Db.Create(&models.DialogRow{DialogID: dialogID, CustomerID: customerID, Text: text, Language: language, Consent: false})
+	err := dataService.DB.Create(&models.DialogRow{DialogID: dialogID, CustomerID: customerID, Text: text, Language: language, Consent: false})
 	errorChannel <- err.Error
 	if err.Error != nil {
 		commons.Log.WithFields(logrus.Fields{"error": err.Error}).Warn("Failed to add the data to the database because")
@@ -47,9 +83,9 @@ func SaveToDB(customerID string, dialogID string, text string, language string, 
 }
 
 // Modifies the consent of the user
-func ModifyDB(dialogID string, errorChannel chan<- error) {
+func (dataService *DataService) ModifyDB(dialogID string, errorChannel chan<- error) {
 	commons.Log.WithFields(logrus.Fields{"DialogID": dialogID}).Info("Adding consent to this dialog")
-	result := commons.Db.Table("dialog_rows").Where("dialogID = ?", dialogID).Update("consent", true)
+	result := dataService.DB.Table("dialog_rows").Where("dialogID = ?", dialogID).Update("consent", true)
 	errorChannel <- result.Error
 	if result.Error != nil {
 		commons.Log.WithFields(logrus.Fields{"error": result.Error}).Warn("Failed to add the data to the database because")
