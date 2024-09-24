@@ -35,16 +35,21 @@ func CheckConsent(c *gin.Context) {
 	}
 
 	commons.Log.Info("Processing consent request")
+	errorChannel := make(chan error)
 	if answer == "false" {
 		c.JSON(http.StatusOK, "Dialog data deleted")
 		// deletes the dialog data if the user does not consent
-		errorChannel := make(chan error)
 		go services.DeleteDialogData(dialogID, errorChannel)
 		err := <-errorChannel
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, "Could not delete dialog entries with this ID")
 		}
 	} else {
+		go services.ModifyDB(dialogID, errorChannel)
+		err := <-errorChannel
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, "Could not delete dialog entries with this ID")
+		}
 		c.JSON(http.StatusOK, "Dialog data saved")
 	}
 }

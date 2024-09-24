@@ -16,4 +16,5 @@ type DialogRow struct {
 	CustomerID string `json:"customerId" gorm:"column:customerID"`
 	Text       string `json:"text" gorm:"column:stext"`
 	Language   string `json:"language" gorm:"column:language"`
+	Consent    bool   `json:"consent" gorm:"type:boolean"`
 }

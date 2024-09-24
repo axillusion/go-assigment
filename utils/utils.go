@@ -43,5 +43,5 @@ func initLogger() {
 	commons.Log = logrus.New()
 	commons.Log.SetOutput(os.Stdout)
 	commons.Log.SetFormatter(&logrus.JSONFormatter{})
-	commons.Log.SetLevel(logrus.WarnLevel)
+	commons.Log.SetLevel(logrus.DebugLevel)
 }

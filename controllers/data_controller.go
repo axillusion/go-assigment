@@ -26,7 +26,6 @@ func AddMessageToDialog(c *gin.Context) {
 		commons.Log.Warn("The JSON payload of the request invalid, processing finished")
 		return
 	}
-	// save the new message received in the Database
 	commons.Log.Info("Processing request")
 
 	errorChannel := make(chan error)
@@ -45,9 +44,10 @@ func GetUserData(c *gin.Context) {
 	customerID := c.Query("customerID")
 	var dataPoints []map[string]interface{}
 
-	query := commons.Db.Table("Dialog_rows").
+	query := commons.Db.Table("dialog_rows").
 		Select("dialogID", "customerID", "stext", "language").
-		Order("created_at DESC")
+		Order("created_at DESC").
+		Where("consent = ?", true)
 
 	// Check if language argument is present
 	if language != "" {
@@ -66,9 +66,10 @@ func GetUserData(c *gin.Context) {
 	// Calculate the offset based on the page number and page size
 	offset := (page - 1) * pageSize
 
-	commons.Log.WithFields(logrus.Fields{"language": language, "customerID": customerID, "page": page, "pageSize": pageSize}).Info("Received request to fetch data on data/ with the following parameters")
-
-	query = query.Limit(pageSize).Offset(offset)
+	commons.Log.WithFields(logrus.Fields{"language": query.RowsAffected, "customerID": customerID, "page": page, "pageSize": pageSize}).Info("Received request to fetch data on data/ with the following parameters")
+	if pageSize > 0 {
+		query = query.Limit(pageSize).Offset(offset)
+	}
 	// Execute the query and scan the results into the dataPoints slice
 	errorChannel := make(chan error)
 	go services.FetchData(query, &dataPoints, errorChannel)
