@@ -21,12 +21,22 @@ func InitServer() {
 	routes.InitEndpoints(service)
 }
 
-func InitServerTest() (*gin.Engine, *commons.MockDataService) {
+func InitServerTestWithMock() (*gin.Engine, *commons.MockDataService) {
 	os.Chdir("..")
+	//fmt.Println(os.Getwd())
 	initLogger()
 	initDB()
 	service := new(commons.MockDataService)
-	return routes.InitEndpoints(service), service
+	return routes.InitEndpointsTest(service), service
+}
+
+func InitServerTestNoMock() (*gin.Engine, *services.DataService) {
+	os.Chdir("..")
+	//fmt.Println(os.Getwd())
+	initLogger()
+	DB := initDB()
+	service := services.NewDataService(DB)
+	return routes.InitEndpointsTest(service), service
 }
 
 func initDB() *gorm.DB {

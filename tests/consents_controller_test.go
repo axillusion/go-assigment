@@ -7,21 +7,21 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/mock"
 )
 
 func TestCheckConsentWithConsentGiven(t *testing.T) {
 	//gin.SetMode(gin.TestMode)
-	router, service := utils.InitServerTest()
+	router, service := utils.InitServerTestWithMock()
 
 	// Create a test request
 	dialogID := "123"
 	message := "true"
 	requestBody := []byte(message)
 
-	errorChannel := make(chan error)
-	service.On("Delete", dialogID, errorChannel).Return(nil)
-	service.On("ModifyDB", dialogID, errorChannel).Return(nil)
-
+	service.On("ModifyDB", dialogID, mock.AnythingOfType("chan<- error")).Return(nil).Once()
+	service.On("Delete", dialogID, mock.AnythingOfType("chan<- error")).Return(nil).Once()
 	req, err := http.NewRequest("POST", "/consents/"+dialogID, bytes.NewBuffer(requestBody))
 	if err != nil {
 		t.Fatalf("Failed to create test request: %s", err)
@@ -47,16 +47,15 @@ func TestCheckConsentWithConsentGiven(t *testing.T) {
 
 func TestCheckConsentWithoutConsent(t *testing.T) {
 	//gin.SetMode(gin.TestMode)
-	router, service := utils.InitServerTest()
+	router, service := utils.InitServerTestWithMock()
 
 	// Create a test request
 	dialogID := "123"
-	message := "true"
+	message := "false"
 	requestBody := []byte(message)
 
-	errorChannel := make(chan error)
-	service.On("Delete", dialogID, errorChannel).Return(nil)
-	service.On("ModifyDB", dialogID, errorChannel).Return(nil)
+	service.On("ModifyDB", dialogID, mock.AnythingOfType("chan<- error")).Return(nil).Once()
+	service.On("Delete", dialogID, mock.AnythingOfType("chan<- error")).Return(nil).Once()
 
 	req, err := http.NewRequest("POST", "/consents/"+dialogID, bytes.NewBuffer(requestBody))
 	if err != nil {
@@ -83,16 +82,15 @@ func TestCheckConsentWithoutConsent(t *testing.T) {
 
 func TestCheckConsentWithInvalidPayload(t *testing.T) {
 	//gin.SetMode(gin.TestMode)
-	router, service := utils.InitServerTest()
+	router, service := utils.InitServerTestWithMock()
 
 	// Create a test request
 	dialogID := "123"
-	message := "true"
+	message := "random message that will fail"
 	requestBody := []byte(message)
 
-	errorChannel := make(chan error)
-	service.On("Delete", dialogID, errorChannel).Return(nil)
-	service.On("ModifyDB", dialogID, errorChannel).Return(nil)
+	service.On("ModifyDB", dialogID, mock.AnythingOfType("chan<- error")).Return(nil).Once()
+	service.On("Delete", dialogID, mock.AnythingOfType("chan<- error")).Return(nil).Once()
 
 	req, err := http.NewRequest("POST", "/consents/"+dialogID, bytes.NewBuffer(requestBody))
 	if err != nil {
