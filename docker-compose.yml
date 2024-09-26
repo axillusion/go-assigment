@@ -1,12 +1,24 @@
-version: '3'
 services:
   db: 
     image: mysql:latest
     container_name: dbContainer
     ports: 
-      - "3306:3306"
-    envinronment: 
-      - MYSQL_ROOT_PASSWORD=sqlTudelft+990!
-      - MYSQL_DATABASE=Messages
+      - "1405:3306"
     volumes:
-      - "C:/Users/TAAGECA3/OneDrive - Swisscom/Desktop/Db"
+      - "C:/Users/TAAGECA3/OneDrive - Swisscom/Desktop/Db:/var/lib/mysql"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+  app:
+    build: .
+    container_name: goAppContainer
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env

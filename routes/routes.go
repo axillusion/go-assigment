@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"main/controllers"
-	"main/services"
+	"github.com/axillusion/go-assigment/controllers"
+	"github.com/axillusion/go-assigment/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,7 +14,7 @@ func InitEndpoints(service services.DataServiceInterface) *gin.Engine {
 	router.GET("/data", dataController.GetUserData)
 	router.POST("/consents/:dialogID", consentController.CheckConsent)
 	router.POST("/data/:customerID/:dialogID", dataController.AddMessageToDialog)
-	router.Run("localhost:8080")
+	router.Run(":8080")
 	return router
 }
 

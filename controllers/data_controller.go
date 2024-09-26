@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
-	"main/commons"
-	"main/models"
-	"main/services"
+	"github.com/axillusion/go-assigment/commons"
+	"github.com/axillusion/go-assigment/models"
+	"github.com/axillusion/go-assigment/services"
 )
 
 type DataController struct {

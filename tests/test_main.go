@@ -1,9 +1,9 @@
 package tests
 
 import (
-	"main/models"
-	"main/services"
-	"main/utils"
+	"github.com/axillusion/go-assigment/models"
+	"github.com/axillusion/go-assigment/services"
+	"github.com/axillusion/go-assigment/utils"
 
 	"github.com/gin-gonic/gin"
 )

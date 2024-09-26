@@ -2,10 +2,11 @@ package tests
 
 import (
 	"bytes"
-	"main/utils"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/axillusion/go-assigment/utils"
 
 	"github.com/stretchr/testify/mock"
 )

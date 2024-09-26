@@ -8,8 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"io"
-	"main/commons"
-	"main/services"
+
+	"github.com/axillusion/go-assigment/commons"
+	"github.com/axillusion/go-assigment/services"
 )
 
 type ConsentController struct {

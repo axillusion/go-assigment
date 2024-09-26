@@ -1,11 +1,13 @@
 package utils
 
 import (
-	"main/commons"
-	"main/models"
-	"main/routes"
-	"main/services"
 	"os"
+	"path/filepath"
+
+	"github.com/axillusion/go-assigment/commons"
+	"github.com/axillusion/go-assigment/models"
+	"github.com/axillusion/go-assigment/routes"
+	"github.com/axillusion/go-assigment/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -14,38 +16,23 @@ import (
 	"gorm.io/gorm"
 )
 
-func InitServer() {
-	initLogger()
-	DB := initDB()
-	service := services.NewDataService(DB)
-	routes.InitEndpoints(service)
-}
-
-func InitServerTestWithMock() (*gin.Engine, *commons.MockDataService) {
-	os.Chdir("..")
-	//fmt.Println(os.Getwd())
-	initLogger()
-	initDB()
-	service := new(commons.MockDataService)
-	return routes.InitEndpointsTest(service), service
-}
-
-func InitServerTestNoMock() (*gin.Engine, *services.DataService) {
-	os.Chdir("..")
-	//fmt.Println(os.Getwd())
-	initLogger()
-	DB := initDB()
-	service := services.NewDataService(DB)
-	return routes.InitEndpointsTest(service), service
+func loadEnv() {
+	envPath := ".env"
+	if _, err := os.Stat(envPath); os.IsNotExist(err) {
+		envPath = filepath.Join("..", ".env")
+	}
+	err := godotenv.Load(envPath)
+	if err != nil {
+		commons.Log.Fatalf("Could not load env file from path %s with error: %v", envPath, err)
+	} else {
+		commons.Log.Infof("Loaded env file from path %s", envPath)
+	}
 }
 
 func initDB() *gorm.DB {
 	var err error
 
-	err = godotenv.Load()
-	if err != nil {
-		commons.Log.Fatal("Could not load env file with error ?", err)
-	}
+	loadEnv()
 
 	db_user := os.Getenv("DB_USER")
 	db_pass := os.Getenv("DB_PASSWORD")
@@ -59,6 +46,29 @@ func initDB() *gorm.DB {
 	}
 	commons.Log.Info("Succesfully established database connection")
 	return DB
+}
+
+func InitServer() {
+	initLogger()
+	DB := initDB()
+	service := services.NewDataService(DB)
+	routes.InitEndpoints(service)
+}
+
+func InitServerTestWithMock() (*gin.Engine, *commons.MockDataService) {
+	//fmt.Println(os.Getwd())
+	initLogger()
+	initDB()
+	service := new(commons.MockDataService)
+	return routes.InitEndpointsTest(service), service
+}
+
+func InitServerTestNoMock() (*gin.Engine, *services.DataService) {
+	//fmt.Println(os.Getwd())
+	initLogger()
+	DB := initDB()
+	service := services.NewDataService(DB)
+	return routes.InitEndpointsTest(service), service
 }
 
 func initLogger() {

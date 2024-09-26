@@ -5,8 +5,8 @@ import (
 
 	"gorm.io/gorm"
 
-	"main/commons"
-	"main/models"
+	"github.com/axillusion/go-assigment/commons"
+	"github.com/axillusion/go-assigment/models"
 )
 
 type DataService struct {

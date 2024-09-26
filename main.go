@@ -1,7 +1,7 @@
 package main
 
 import (
-	"main/utils"
+	"github.com/axillusion/go-assigment/utils"
 )
 
 func main() {
