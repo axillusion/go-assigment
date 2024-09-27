@@ -1,4 +1,4 @@
-package tests
+package controllers
 
 import (
 	"bytes"
@@ -6,14 +6,26 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/axillusion/go-assigment/utils"
-
+	"github.com/axillusion/go-assigment/commons"
+	"github.com/axillusion/go-assigment/logger"
+	"github.com/axillusion/go-assigment/mocks"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAddMessageToDialogInvalidBody(t *testing.T) {
-	router, service := utils.InitServerTestWithMock()
+func setupData() *gin.Engine {
+	commons.Log = logger.NewLogger()
+	service := new(mocks.MockDataService)
 	service.On("SaveToDB", "404", "404", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("chan<- error")).Return(nil).Once()
+	dataController := NewDataController(service)
+	router := gin.Default()
+	router.GET("/data", dataController.GetUserData)
+	router.POST("/data/:customerID/:dialogID", dataController.AddMessageToDialog)
+	return router
+}
+
+func TestAddMessageToDialogInvalidBody(t *testing.T) {
+	router = setupData()
 	// Create a test request
 	requestBody := []byte(`this will fail`)
 	req, err := http.NewRequest("POST", "/data/404/404", bytes.NewBuffer(requestBody))
@@ -34,8 +46,7 @@ func TestAddMessageToDialogInvalidBody(t *testing.T) {
 }
 
 func TestAddMessageToDialogValidBody(t *testing.T) {
-	router, service := utils.InitServerTestWithMock()
-	service.On("SaveToDB", "404", "404", "Test text", "EN", mock.AnythingOfType("chan<- error")).Return(nil).Once()
+	router = setupData()
 	// Create a test request
 	requestBody := []byte(`{"text": "Test text", "language": "EN"}`)
 	req, err := http.NewRequest("POST", "/data/404/404", bytes.NewBuffer(requestBody))

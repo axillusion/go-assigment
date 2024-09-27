@@ -1,4 +1,4 @@
-package tests
+package controllers
 
 import (
 	// for testing the functions
@@ -7,22 +7,34 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/axillusion/go-assigment/utils"
+	"github.com/axillusion/go-assigment/commons"
+	"github.com/axillusion/go-assigment/logger"
+	"github.com/axillusion/go-assigment/mocks"
+	"github.com/gin-gonic/gin"
 
 	"github.com/stretchr/testify/mock"
 )
 
-func TestCheckConsentWithConsentGiven(t *testing.T) {
-	//gin.SetMode(gin.TestMode)
-	router, service := utils.InitServerTestWithMock()
+var router *gin.Engine
+var service mocks.MockDataService
 
-	// Create a test request
+func setupConsent() *gin.Engine {
+	commons.Log = logger.NewLogger()
+	service := new(mocks.MockDataService)
+	service.On("ModifyDB", "123", mock.AnythingOfType("chan<- error")).Return(nil).Once()
+	service.On("Delete", "123", mock.AnythingOfType("chan<- error")).Return(nil).Once()
+	consentController := NewConsentController(service)
+	router := gin.Default()
+	router.POST("/consents/:dialogID", consentController.CheckConsent)
+	return router
+}
+
+func TestCheckConsentWithConsentGiven(t *testing.T) {
+	router = setupConsent()
 	dialogID := "123"
 	message := "true"
 	requestBody := []byte(message)
 
-	service.On("ModifyDB", dialogID, mock.AnythingOfType("chan<- error")).Return(nil).Once()
-	service.On("Delete", dialogID, mock.AnythingOfType("chan<- error")).Return(nil).Once()
 	req, err := http.NewRequest("POST", "/consents/"+dialogID, bytes.NewBuffer(requestBody))
 	if err != nil {
 		t.Fatalf("Failed to create test request: %s", err)
@@ -47,16 +59,10 @@ func TestCheckConsentWithConsentGiven(t *testing.T) {
 }
 
 func TestCheckConsentWithoutConsent(t *testing.T) {
-	//gin.SetMode(gin.TestMode)
-	router, service := utils.InitServerTestWithMock()
-
-	// Create a test request
+	router = setupConsent()
 	dialogID := "123"
 	message := "false"
 	requestBody := []byte(message)
-
-	service.On("ModifyDB", dialogID, mock.AnythingOfType("chan<- error")).Return(nil).Once()
-	service.On("Delete", dialogID, mock.AnythingOfType("chan<- error")).Return(nil).Once()
 
 	req, err := http.NewRequest("POST", "/consents/"+dialogID, bytes.NewBuffer(requestBody))
 	if err != nil {
@@ -82,16 +88,10 @@ func TestCheckConsentWithoutConsent(t *testing.T) {
 }
 
 func TestCheckConsentWithInvalidPayload(t *testing.T) {
-	//gin.SetMode(gin.TestMode)
-	router, service := utils.InitServerTestWithMock()
-
-	// Create a test request
+	router = setupConsent()
 	dialogID := "123"
 	message := "random message that will fail"
 	requestBody := []byte(message)
-
-	service.On("ModifyDB", dialogID, mock.AnythingOfType("chan<- error")).Return(nil).Once()
-	service.On("Delete", dialogID, mock.AnythingOfType("chan<- error")).Return(nil).Once()
 
 	req, err := http.NewRequest("POST", "/consents/"+dialogID, bytes.NewBuffer(requestBody))
 	if err != nil {

@@ -3,14 +3,13 @@ package services
 import (
 	"github.com/sirupsen/logrus"
 
-	"gorm.io/gorm"
-
 	"github.com/axillusion/go-assigment/commons"
+	"github.com/axillusion/go-assigment/database"
 	"github.com/axillusion/go-assigment/models"
 )
 
 type DataService struct {
-	DB *gorm.DB
+	DB database.Database
 }
 
 type DataServiceInterface interface {
@@ -21,7 +20,7 @@ type DataServiceInterface interface {
 }
 
 // Constructor for the service to instantiate the database
-func NewDataService(db *gorm.DB) *DataService {
+func NewDataService(db database.Database) *DataService {
 	return &DataService{
 		DB: db,
 	}
@@ -49,7 +48,7 @@ func (dataService *DataService) FetchData(language string, customerID string, pa
 	}
 
 	commons.Log.Info("Fetching data")
-	err := query.Find(destination).Error
+	err := query.Find(destination)
 	errorChannel <- err
 	if err != nil {
 		commons.Log.Warn("Failed to execute database query to extract the data")
@@ -62,8 +61,8 @@ func (dataService *DataService) FetchData(language string, customerID string, pa
 func (dataService *DataService) Delete(dialogID string, errorChannel chan<- error) {
 	commons.Log.Info("Deleting data from the database")
 	res := dataService.DB.Where("dialogID = ?", dialogID).Delete(&models.DialogRow{})
-	errorChannel <- res.Error
-	if res.Error != nil {
+	errorChannel <- res
+	if res != nil {
 		commons.Log.WithFields(logrus.Fields{"dialogID": dialogID}).Fatal("Failed to delete rows from database with this id")
 		return
 	}
@@ -74,9 +73,9 @@ func (dataService *DataService) Delete(dialogID string, errorChannel chan<- erro
 func (dataService *DataService) SaveToDB(customerID string, dialogID string, text string, language string, errorChannel chan<- error) {
 	commons.Log.WithFields(logrus.Fields{"DialogID": dialogID, "CustomerID": "customerID", "Text": text, "Language": language}).Info("Creating new database entry with this information")
 	err := dataService.DB.Create(&models.DialogRow{DialogID: dialogID, CustomerID: customerID, Text: text, Language: language, Consent: false})
-	errorChannel <- err.Error
-	if err.Error != nil {
-		commons.Log.WithFields(logrus.Fields{"error": err.Error}).Warn("Failed to add the data to the database because")
+	errorChannel <- err
+	if err != nil {
+		commons.Log.WithFields(logrus.Fields{"error": err}).Warn("Failed to add the data to the database because")
 		return
 	}
 	commons.Log.Info("Sucessfuly added the entry")
@@ -86,8 +85,8 @@ func (dataService *DataService) SaveToDB(customerID string, dialogID string, tex
 func (dataService *DataService) ModifyDB(dialogID string, errorChannel chan<- error) {
 	commons.Log.WithFields(logrus.Fields{"DialogID": dialogID}).Info("Adding consent to this dialog")
 	result := dataService.DB.Table("dialog_rows").Where("dialogID = ?", dialogID).Update("consent", true)
-	errorChannel <- result.Error
-	if result.Error != nil {
+	errorChannel <- result
+	if result != nil {
 		commons.Log.WithFields(logrus.Fields{"error": result.Error}).Warn("Failed to add the data to the database because")
 		return
 	}

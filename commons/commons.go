@@ -1,8 +1,5 @@
 package commons
 
-import (
-	"github.com/sirupsen/logrus"
-)
+import "github.com/axillusion/go-assigment/logger"
 
-// var Db *gorm.DB
-var Log *logrus.Logger
+var Log logger.Logger
